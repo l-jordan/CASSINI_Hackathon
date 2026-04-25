@@ -108,7 +108,8 @@ def process_date(date_folder):
     indices = export_indices(B, G, R, NIR, SWIR1, SWIR2)
     save_all(indices, profile, out_dir, date)
     
-date_folders = sorted(input_path.iterdir())
-
-with ProcessPoolExecutor() as executor:
-    executor.map(process_date, date_folders)
+if __name__ == '__main__':
+    date_folders = sorted(input_path.iterdir())
+    
+    with ProcessPoolExecutor() as executor:
+        executor.map(process_date, date_folders)
