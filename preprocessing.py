@@ -1,12 +1,9 @@
-# -------------------------------
-# CALCULATING INDICES FROM SENTINEL-2 DATA
-#---------------------------------
 from concurrent.futures import ProcessPoolExecutor
 import rasterio 
 import numpy as np
 from pathlib import Path
 from rasterio.enums import Resampling
-import tqdm
+from tqdm import tqdm
 
 # Data Configuration 
 # ----------------------------------------
@@ -44,9 +41,9 @@ def loading_bands(date_folder, date):
             
         bands_10m = np.stack([
             b02.read(1),
-            b03.read(2),
-            b04.read(3),
-            b08.read(4),
+            b03.read(1),
+            b04.read(1),
+            b08.read(1),
         ]).astype(np.float32)/scale
         
     # SWIR1 - Sampling to 10m grid
@@ -55,7 +52,7 @@ def loading_bands(date_folder, date):
     # SWIR2
     SWIR2 = resample_to_match(find("B12"), find("B02"))
     
-    B, G, R, NIR = bands_10m[1], bands_10m[2], bands_10m[3], bands_10m[4]
+    B, G, R, NIR = bands_10m[0], bands_10m[1], bands_10m[2], bands_10m[3]
     
     return B, G, R, NIR, SWIR1, SWIR2, profile
 
@@ -87,6 +84,7 @@ def export_indices(B, G, R, NIR, SWIR1, SWIR2):
             "PGHI":  pghi.astype(np.float32),
             "CSBI":  csbi.astype(np.float32),
         }
+        
 
 # Saving file function 
 # ------------------------------------------
@@ -111,5 +109,5 @@ def process_date(date_folder):
 if __name__ == '__main__':
     date_folders = sorted(input_path.iterdir())
     
-    with ProcessPoolExecutor() as executor:
-        executor.map(process_date, date_folders)
+    for date_folder in tqdm(date_folders, desc="Processing dates"):
+        process_date(date_folder)
