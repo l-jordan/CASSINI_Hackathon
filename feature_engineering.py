@@ -17,7 +17,7 @@ print(df["class"].value_counts())
 
 counts = df["class"].value_counts()
 min_count = counts.min() 
-threshold = 5 * min_count  # ~3772
+threshold = 5*min_count 
 
 def smart_sample(g):
     n = len(g)
@@ -32,11 +32,11 @@ def smart_sample(g):
 df_balanced = (
     df.groupby("class")
     .apply(smart_sample)
-    .reset_index(drop=True)
+    .reset_index(drop=False)  # ← drop=True is dropping your class column!
 )
 
-print(df_balanced["class"].value_counts())
-print(df_balanced.shape)
+print("Amount of pixels in downsampled file:", df_balanced.shape)
+print(df_balanced.head())
 
 df_balanced.to_parquet(
     r"C:\\Users\\Laure\\Documents\\CASSINI_Hackathon\\CASSINI_Hackathon\\data\\training_data_balanced.parquet",

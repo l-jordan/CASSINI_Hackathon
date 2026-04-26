@@ -3,6 +3,7 @@
 Pixel-level feature table from Sentinel TIF bands/indices inside GeoJSON polygons.
 Output: 1 row per pixel, columns = band_date values, plus a 'class' label column.
 """
+# MADE BY ALEX DE JONG
 
 # -- coding: utf-8 --
 """
@@ -23,7 +24,7 @@ from tqdm import tqdm
 
 # === CONFIG ===
 
-geojson_folder  = r"C:\\Users\\Laure\\Documents\\CASSINI_Hackathon\\CASSINI_Hackathon\\data\\labels"
+geojson_folder  = r"C:\\Users\\Laure\\Documents\\CASSINI_Hackathon\\CASSINI_Hackathon\\data\\new_labels"
 training_folder = r"C:\\Users\\Laure\\Documents\\CASSINI_Hackathon\\CASSINI_Hackathon\\data\\training_clipped"
 output_parquet  = r"C:\\Users\\Laure\\Documents\\CASSINI_Hackathon\\CASSINI_Hackathon\\data\\training_data.parquet"
 
@@ -37,10 +38,10 @@ def load_class_geodataframes(geojson_folder: str) -> dict[str, gpd.GeoDataFrame]
         class_name = path.stem
         gdf = gpd.read_file(path)
         if gdf.empty:
-            print(f"⚠️  Empty GeoJSON: {path.name}")
+            print(f"Empty GeoJSON: {path.name}")
             continue
         classes[class_name] = gdf
-        print(f"  ✓ Loaded class '{class_name}' — {len(gdf)} polygon(s)")
+        print(f"Loaded class '{class_name}' — {len(gdf)} polygon(s)")
     return classes
 
 # === INDEX TIF FILES ===

@@ -2,13 +2,15 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix, classification_report, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import joblib
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 # MLP with four layers, ReLU activation and 20% drop out
 class MLP_Classifier(nn.Module):
@@ -38,14 +40,16 @@ class MLP_Classifier(nn.Module):
 
 df = pd.read_parquet("data\\training_data_balanced.parquet")
 class_names = sorted(df["class"].unique().tolist())
+
+# X - All features y - Class labels transformed into ids
 X = df.iloc[:, 2:]
 y = df.iloc[:, 0].map({name: i for i, name in enumerate(class_names)})  
 
-# TRAIN SET (70% OF THE DATA)
+# TRAIN SET (80% OF THE DATA)
 X_train, X_temp, y_train, y_temp = train_test_split(
-    X, y, test_size=0.3, random_state=42, stratify=y)  # ← added random_state + stratify
+    X, y, test_size=0.2, random_state=42, stratify=y)
 
-# TEST & VALIDATE (15% EACH)
+# TEST & VALIDATE (10% EACH)
 X_test, X_val, y_test, y_val = train_test_split(
     X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
 
@@ -57,7 +61,7 @@ X_val   = scaler.transform(X_val)
 
 # Convert to tensors
 X_train_t = torch.FloatTensor(X_train)
-y_train_t = torch.LongTensor(y_train.values)  # ← .values needed after .map()
+y_train_t = torch.LongTensor(y_train.values)
 X_test_t  = torch.FloatTensor(X_test)
 y_test_t  = torch.LongTensor(y_test.values)
 X_val_t   = torch.FloatTensor(X_val)
@@ -71,9 +75,9 @@ train_loader = DataLoader(
 ##############################################
 # TRAINING THE MODEL
 ##############################################
-input_size  = X_train.shape[1]   # 4 for Iris
+input_size  = X_train.shape[1]
 hidden_size = 256
-num_classes  = len(np.unique(y))  # 3 for Iris
+num_classes  = len(np.unique(y))
 epochs       = 20
 lr           = 0.001
 
@@ -85,7 +89,6 @@ train_losses = []
 val_losses   = []
 
 for epoch in range(epochs):
-    # -- Train --
     model.train()
     epoch_loss = 0
     for X_batch, y_batch in train_loader:
@@ -102,29 +105,35 @@ for epoch in range(epochs):
         val_loss = criterion(model(X_val_t), y_val_t).item()
     val_losses.append(val_loss)
 
-    if (epoch + 1) % 5 == 0:   # ← print every 5 epochs (every 20 you'd only see 1 line)
+    if (epoch + 1) % 2 == 0: #Print every two epochs
         print(f"Epoch [{epoch+1:>2}/{epochs}]  "
               f"Train Loss: {train_losses[-1]:.4f}  "
               f"Val Loss: {val_losses[-1]:.4f}")
 
+##############################################
+# SAVE MODEL & SCALER
+##############################################
+torch.save(model.state_dict(), "model.pth") # saves learned numbers from training
+joblib.dump(scaler, "scaler.pkl") # mean and std of X_train
+print("\nSaved: model.pth, scaler.pkl")
 
 #################################################
 # ANALYSIS
 #################################################
 model.eval()
 with torch.no_grad():
-    preds_test = torch.argmax(model(X_test_t), dim=1).numpy()
-    preds_val  = torch.argmax(model(X_val_t),  dim=1).numpy()
+    preds_test = torch.argmax(model(X_test_t), dim=1).numpy() 
+    preds_val  = torch.argmax(model(X_val_t),  dim=1).numpy() 
 
 # Accuracy
 print(f"\nVal  Accuracy: {(preds_val  == y_val ).mean()*100:.2f}%")
 print(f"Test Accuracy: {(preds_test == y_test).mean()*100:.2f}%")
 
 # Confusion matrix — on TEST set
-cm = confusion_matrix(y_test, preds_test)
+cm = confusion_matrix(y_test, preds_test, normalize="all") 
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
 disp.plot(cmap="Blues", colorbar=False, xticks_rotation=45)
-plt.title("Confusion Matrix (Test Set)")
+plt.title(r"Confusion Matrix (Test Set) — % of all pixels")
 plt.tight_layout()
 plt.savefig("confusion_matrix.png", dpi=150)
 plt.show()

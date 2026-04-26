@@ -71,7 +71,6 @@ def export_indices(B, G, R, NIR, SWIR1, SWIR2):
     with np.errstate(invalid="ignore", divide="ignore"):
 
         ndvi = (NIR-R)/(NIR+R) # Normalised difference vegetation index
-        evi = 2.5 * (NIR - R) / (NIR + 6*R -7.5*B + 1) # Enhanced vegetation index
         pghi = B/SWIR2
         csbi = SWIR2/SWIR1
 
@@ -80,7 +79,6 @@ def export_indices(B, G, R, NIR, SWIR1, SWIR2):
             "Green": G,
             "Blue":  B,
             "NDVI":  ndvi.astype(np.float32),
-            "EVI":   evi.astype(np.float32),
             "PGHI":  pghi.astype(np.float32),
             "CSBI":  csbi.astype(np.float32),
         }

@@ -1,17 +1,19 @@
-"""
-Clips pixel values in a raster to [min_val, max_val] and saves the result.
-"""
+########################################
+# Clips raster images to min & max values
+########################################
 
 import numpy as np
 import rasterio
 from pathlib import Path
 from tqdm import tqdm
 
+# Configuration
 input_path = Path("./data/training")
 output_path = Path("./data/training_clipped")
 output_path.mkdir(exist_ok=True)    
     
 def clip_raster_values(input_path, output_path, min_val, max_val, nodata_val=None):
+    # Open the input path which is 
     with rasterio.open(input_path) as src:
         data = src.read(1).astype(np.float32)
         profile = src.profile.copy()
