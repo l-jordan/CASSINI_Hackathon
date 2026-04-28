@@ -1,5 +1,5 @@
-data/Training/20210105/20210105_B06.tif
-*.tif
+data/labels/exposed_slope.geojson
 *.geojson
+*.tif
 *.xml
 *.parquet
